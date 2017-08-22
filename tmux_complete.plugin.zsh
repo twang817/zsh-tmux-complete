@@ -9,10 +9,15 @@ _tmux_pane_words() {
     return 1
   fi
 
+  # do not complete if there is no word
+  if [[ "${LBUFFER[$CURSOR]}" == " " ]]; then
+    return 1
+  fi
+
   # Based on vim-tmuxcomplete's splitwords function.
   # https://github.com/wellle/tmux-complete.vim/blob/master/sh/tmuxcomplete
   _tmux_capture_pane() {
-    tmux capture-pane -J -p -S -100 $@ |
+    tmux capture-pane -J -p $@ |
       # Remove "^C".
       sed 's/\^C\S*/ /g' |
       # copy lines and split words
@@ -24,14 +29,13 @@ _tmux_pane_words() {
   }
   # Capture current pane first.
   w=( ${(u)=$(_tmux_capture_pane)} )
-  echo $w > /tmp/w1
   local i
   for i in $(tmux list-panes -F '#D'); do
     # Skip current pane (handled before).
     [[ "$TMUX_PANE" = "$i" ]] && continue
     w+=( ${(u)=$(_tmux_capture_pane -t $i)} )
   done
-  _wanted values expl 'words from current tmux pane' compadd -a w
+  _wanted values expl 'words from tmux panes' compadd -a w
 }
 
 zle -C tmux-pane-words-prefix   complete-word _generic
@@ -40,6 +44,6 @@ zstyle ':completion:tmux-pane-words-(prefix|anywhere):*' completer _tmux_pane_wo
 zstyle ':completion:tmux-pane-words-(prefix|anywhere):*' ignore-line current
 # Display the (interactive) menu on first execution of the hotkey.
 zstyle ':completion:tmux-pane-words-(prefix|anywhere):*' menu yes select
-# zstyle ':completion:tmux-pane-words-anywhere:*' matcher-list 'b:=* m:{A-Za-z}={a-zA-Z}'
-zstyle ':completion:tmux-pane-words-(prefix|anywhere):*' matcher-list 'b:=* m:{A-Za-z}={a-zA-Z}'
+zstyle ':completion:tmux-pane-words-anywhere:*' matcher-list 'b:=* m:{A-Za-z}={a-zA-Z}'
+#zstyle ':completion:tmux-pane-words-(prefix|anywhere):*' matcher-list 'b:=* m:{A-Za-z}={a-zA-Z}'
 # }}}
